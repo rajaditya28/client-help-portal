@@ -2,6 +2,8 @@
 
 A consultant supports several clients. A client raises a help request, the consultant starts a screen-sharing call from it, the call is recorded with the client's consent, and afterwards both of them get the recording, a transcript and an AI summary in their call history.
 
+**Docs:** [Product one-pager](docs/PRODUCT.md) (problem, decisions, scope, metrics, risks) · [How I used and checked the AI](docs/AI_WORKFLOW.md)
+
 **Stack:** Vue 3 + Vite + Pinia · NestJS 11 + Socket.IO · PostgreSQL + Prisma · WebRTC (peer-to-peer) · MediaRecorder · ffmpeg · Deepgram (speech-to-text) · Gemini or Claude (summary) · TypeScript end to end.
 
 ---
