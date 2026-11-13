@@ -17,6 +17,8 @@ export interface GeminiJsonResult {
 /** Statuses where trying the next model makes sense (overloaded, rate-limited, model gone). */
 const TRY_NEXT_MODEL = new Set([404, 429, 500, 503]);
 
+const PER_MODEL_TIMEOUT_MS = 30_000;
+
 const logger = new Logger('Gemini');
 
 /**
@@ -50,7 +52,9 @@ export async function geminiGenerateJson(opts: {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': opts.apiKey },
       body,
-      signal: AbortSignal.timeout(90_000),
+      // A normal answer takes ~3 s. A model that accepts the request and then stalls should cost
+      // seconds, not minutes, before we fall through to the next one (seen: one stalled for 90 s).
+      signal: AbortSignal.timeout(PER_MODEL_TIMEOUT_MS),
     }).catch((e: Error) => e);
 
     if (res instanceof Error) {

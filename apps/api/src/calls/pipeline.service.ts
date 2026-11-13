@@ -121,7 +121,7 @@ export class PipelineService {
 
     const video = await this.storage.get(call.recording.storageKey);
     const audio = await this.media.extractAudio(video);
-    const utterances = await this.stt.transcribe(audio, 'audio/ogg', call.recording.durationMs);
+    const utterances = await this.stt.transcribe(audio, 'audio/webm', call.recording.durationMs);
 
     const activity = await this.activityTimeline(callId, call.recording.segmentStartsMs as number[]);
     const segments = attributeSpeakers(utterances, activity, {

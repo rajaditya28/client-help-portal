@@ -67,14 +67,18 @@ export class MediaService {
     }
   }
 
-  /** Extract a mono 16 kHz audio track (small upload for speech-to-text). */
+  /**
+   * Audio-only copy for speech-to-text (much smaller upload than the video).
+   * Stream copy, not a re-encode: the recording is already Opus, which Deepgram accepts, and
+   * re-encoding is slow on small instances (it dominated the TRANSCRIBE step on a 0.1-CPU host).
+   */
   async extractAudio(video: Buffer): Promise<Buffer> {
     const dir = await mkdtemp(join(tmpdir(), 'aud-'));
     try {
       const input = join(dir, 'in.webm');
-      const out = join(dir, 'out.ogg');
+      const out = join(dir, 'audio.webm');
       await writeFile(input, video);
-      await this.run(['-y', '-i', input, '-vn', '-ac', '1', '-ar', '16000', '-c:a', 'libopus', '-b:a', '32k', out]);
+      await this.run(['-y', '-i', input, '-vn', '-c:a', 'copy', out]);
       return await readFile(out);
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -85,7 +89,8 @@ export class MediaService {
   private async probeDurationMs(file: string, existingLog?: string): Promise<number | null> {
     let log = existingLog;
     if (!log || !/Duration: \d/.test(log)) {
-      log = await this.run(['-i', file, '-f', 'null', '-'], true);
+      // Stream copy into the null muxer: reads packet timestamps without decoding any frames.
+      log = await this.run(['-i', file, '-c', 'copy', '-f', 'null', '-'], true);
     }
     // Prefer the last "time=" progress value (exact), fall back to the container Duration.
     const times = [...log.matchAll(/time=(\d+):(\d+):(\d+(?:\.\d+)?)/g)];
