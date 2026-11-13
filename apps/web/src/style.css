@@ -14,6 +14,16 @@ body {
   @apply bg-slate-50 text-slate-900 antialiased;
 }
 
+/* Tailwind v4's reset gives buttons `cursor: default`; restore the pointer on everything clickable. */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+}
+
 @utility btn {
   @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition
     disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500;
