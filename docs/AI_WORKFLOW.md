@@ -31,7 +31,7 @@ I built this the way the role describes: as a team of one, with an AI coding age
 | Access control | An e2e test against the real app and a test database, plus a **mutation check**: I broke `ownedBy()` on purpose and confirmed the test fails (7 of 9 cases did) |
 | Calls + recording | Playwright with two real browsers, run repeatedly to catch flakiness; a second run with real speech and real AI providers; a third with direct connections forbidden, so only TURN could connect |
 | Release | A fresh clone built exactly as a reviewer would, CI on every push, and the same tests run against the live deployment |
-| Product | My own hands-on testing in two windows, plus two separate browsers with separate voices against the live site, including a run with direct connections blocked so the call had to go through the TURN relay |
+| Product | My own hands-on testing in two windows and on two separate devices, plus two separate browsers with separate voices against the live site, including a run with direct connections blocked so the call had to go through the TURN relay |
 
 ## What the checks caught
 
