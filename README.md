@@ -109,7 +109,7 @@ packages/shared  types + socket event names shared by API and web
 
 ## Key decisions and trade-offs
 
-- **Peer-to-peer WebRTC rather than a media server (SFU).** It's 1:1 by design, so P2P has no extra infrastructure and the lowest latency. Two machines on networks that block P2P need a TURN relay, which `ICE_SERVERS` configures. For group calls or server-side recording I'd move to an SFU such as LiveKit.
+- **Peer-to-peer WebRTC rather than a media server (SFU).** It's 1:1 by design, so P2P has no extra infrastructure and the lowest latency. When a direct path is blocked (strict NAT, corporate firewall), calls go through a **Cloudflare TURN** relay. The API generates short-lived TURN credentials for each user, so no relay password ships in the web app. This is verified by an E2E run that forbids direct paths (`FORCE_RELAY=1`) against the live site. For group calls or server-side recording I'd move to an SFU such as LiveKit.
 - **The consultant's browser records.** It already holds every input (the client's screen and voice, plus its own mic), and the client's machine is already busy encoding the screen share. The trade-off: if the consultant's tab crashes, the last unsent chunk (≤4 s) is lost. A server-side recorder (SFU egress) would remove that.
 - **Chunked upload while the call runs.** If a tab closes, at most ~4 s is lost. Chunks are idempotent on `(call, segment, seq)`, so retries are safe. Each recorder restart is a new segment, so a refresh never corrupts earlier footage.
 - **ffmpeg remux after the call.** MediaRecorder WebM has no duration or cue index, so concatenated chunks play but can't be seeked. A stream-copy remux fixes that in under a second, with no re-encoding. `ffmpeg-static` means no system install.
@@ -128,6 +128,7 @@ See [`docs/AI_WORKFLOW.md`](docs/AI_WORKFLOW.md): how the work was checked, and 
 npm test          # API: access-control e2e (real app + test DB) + speaker attribution unit tests
 npm run e2e       # Playwright: two real Chromium users, fake media devices, full call → history flow (mock AI)
 REAL_AI=1 npx playwright test real-ai   # same, with two synthetic voices + real Deepgram and LLM
+REAL_AI=1 FORCE_RELAY=1 BASE_URL=https://client-help-portal.onrender.com npx playwright test real-ai   # live, relay-only
 ```
 
 - **Access control** ([`access-control.e2e-spec.ts`](apps/api/test/access-control.e2e-spec.ts)): boots the real Nest app against a separate `*_test` database. Another client and an unassigned consultant get empty lists and 404s on every read and write, including transcript, summary, recording URL and chunk upload. Owners succeed (positive controls). A media token for one call can't be used for another. I checked that the test can fail by breaking `ownedBy()` on purpose: 7 of 9 cases failed.
@@ -138,7 +139,6 @@ REAL_AI=1 npx playwright test real-ai   # same, with two synthetic voices + real
 See [`apps/api/.env.example`](apps/api/.env.example). Without the optional keys, the matching mock provider is used.
 
 ## Limitations and what I'd do next
-- TURN credentials for the hosted demo, for clients behind strict NATs.
 - Server-side recording (SFU egress) so recording doesn't depend on one browser tab.
 - An evaluation set for summaries (faithfulness to the transcript), run on every prompt or model change.
 - Transcripts for long calls in chunks, with streaming progress; today one call is sent whole, which is fine up to the 30-minute cap.
