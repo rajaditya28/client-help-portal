@@ -1,32 +1,57 @@
 # How I used and checked the AI
 
-I built this with an AI coding agent (Claude Code). The agent wrote most of the code. I made the product and architecture decisions, and nothing counted as done until something independent of the AI had checked it: the compiler, a test, a deliberate break of the code, or a real browser run. This is the record of what that checking caught.
+I built this the way the role describes: as a team of one, with an AI coding agent (Claude Code) as my pair. I owned the product, the architecture and what counted as done. The agent made implementation fast, and I treated everything it produced as unverified until something independent had checked it: the compiler, a test, a deliberate break of the code, or my own hands-on testing of the app.
 
-## How the work was checked
+## Who did what
+
+| I owned | The agent accelerated |
+|---|---|
+| Reading the brief as a PM would, and settling the open questions: one consultant; if the client declines, the call goes ahead unrecorded; recordings kept; reviewers must be able to run it with no friction | First drafts of modules, components and config |
+| The architecture and the trade-offs behind it (below) | Boilerplate: DTOs, wiring, migrations, CI |
+| Choosing providers on cost (free tiers, cost per call, quotas) | Looking up current library and provider APIs |
+| Testing the product by hand in two windows and on two networks, and deciding what was good enough to ship | Writing the tests I asked for, and running the checks |
+| Deployment and setting up accounts, keys and identities | Driving CLIs and APIs during deployment |
+
+## Decisions I made, and why
+
+- **Peer-to-peer WebRTC rather than a media server.** Calls are 1:1, so there's no extra infrastructure and latency is lowest. A TURN relay covers networks that block direct connections.
+- **The consultant's browser records.** It already has the client's screen and voice plus its own mic, and the client's machine is already busy encoding the screen share. Chunks upload every 4 s, so a crash loses seconds, not the call.
+- **Consent is enforced on the server,** not just shown in the UI: chunk uploads are rejected until the client agrees.
+- **Postgres as the job queue (`SKIP LOCKED`) instead of Redis.** One fewer service, jobs are written in the same transaction as the state change, and each pipeline step retries on its own. I've used this pattern in production before.
+- **One ownership rule (`ownedBy`) behind every query,** with 404 for other users' data so a user can't probe which IDs exist.
+- **Speaker labels from measurement, not guesswork.** The browser knows which audio track is talking, which beats diarization guessing from a mixed recording.
+- **AI providers behind interfaces with mock fallbacks,** so reviewers can run everything with no keys, and switching LLM vendor is one setting.
+
+## How I verified the agent's work
 
 | Layer | Check |
 |---|---|
-| Types | `tsc` / `vue-tsc` strict, with types shared between API and web (`packages/shared`). |
-| API behaviour | A scripted smoke test (22 checks) run against the running server before any UI existed. |
-| Access control | An e2e test against the real app and a test database, then a **mutation check**: I broke `ownedBy()` on purpose and confirmed the test fails (7 of 9 cases did). |
-| The risky part (WebRTC + recording + pipeline) | A Playwright test with two real Chromium users and fake media devices, run repeatedly (`--repeat-each=3`) to catch flakiness. |
-| Docs | README claims checked against the code; two were corrected. |
+| Types | Strict `tsc` / `vue-tsc`, with types shared between API and web |
+| API | A 22-check smoke script against the running server before any UI existed |
+| Access control | An e2e test against the real app and a test database, plus a **mutation check**: I broke `ownedBy()` on purpose and confirmed the test fails (7 of 9 cases did) |
+| Calls + recording | Playwright with two real browsers, run repeatedly to catch flakiness; a second run with real speech and real AI providers; a third with direct connections forbidden, so only TURN could connect |
+| Release | A fresh clone built exactly as a reviewer would, CI on every push, and the same tests run against the live deployment |
+| Product | My own hands-on testing in two windows |
 
-## Issues caught, and how
+## What the checks caught
 
-1. **Job retries ignored their backoff** (a time-zone bug). The smoke test deliberately uploaded a corrupt chunk to exercise the failure path. The logs showed all 3 retries in the same second. Cause: Prisma's default `timestamp without time zone` holds UTC, but the claim query compared it with Postgres `now()` in the session zone (IST), so every scheduled job looked 5.5 h overdue. That would also have skipped the grace window for the recording's last chunk. Fix: `timestamptz` on every timestamp column.
-2. **A flaky call join, found by the browser test.** The first E2E run hung on "Joining…". Two causes: no timeout on the socket acknowledgement, and a double join (initial connect handled as a "reconnect") that triggered overlapping renegotiations, where a stale answer could be applied to a newer connection. Fix: an ack timeout, the server always acks, duplicate joins are ignored, and every offer, answer and ICE candidate carries a negotiation id so stale ones are dropped. After the fix it passed 3 of 3 repeated runs.
-3. **The recorder could start without the client's voice.** Found in review of the AI's code: recording started on the first remote track. If video arrived before audio, the client's voice would be missing from the whole segment. Fix: wait for both tracks, and re-run the trigger on every track arrival.
-4. **The build silently produced nothing.** Nest's `deleteOutDir` plus TypeScript `incremental` left a stale `.tsbuildinfo`, so `tsc` emitted no files and reported no error. Caught because the E2E server wouldn't start.
-5. **Misleading speaker labels in mock mode.** The test screenshot showed consultant lines labelled as the client. The mock transcript isn't aligned with the real audio, so voice-activity attribution is noise there. Fix: providers can declare known roles (the mock does). The real attribution logic is covered by unit tests.
-6. **Library versions newer than the AI's knowledge.** npm's latest majors (TypeScript 7, NestJS 12, Prisma 8 rc) were released after the model's training data. I pinned the last majors it knows well, rather than let it guess at new APIs.
-7. **No guessing at the LLM SDK.** The summarizer call was checked against the official SDK documentation and type-checked against the installed SDK, not written from memory.
-8. **A safety guard respected, not bypassed.** Prisma refused an AI-initiated `migrate reset` without the user's explicit consent. Instead of working around the guard, the agent created a fresh development database.
+From my own testing of the app:
+- **The consultant's view froze on the last frame after the client stopped sharing.** A stopped share just stops sending frames, so the video element keeps the last one. Fixed with an explicit start/stop signal from the client, and added to the E2E test.
+- **"Will this work with someone on another network?"** Answering that honestly showed that direct connections alone aren't enough. It led to Cloudflare TURN with short-lived per-user credentials, verified on the live site with direct paths forbidden.
+- **"How many test runs can we afford?"** I worked out the cost per call for speech-to-text, and the daily free-tier limits on the summary models.
+
+From automated checks:
+- **Job retries ignored their backoff** (a time-zone bug). Prisma's default timestamp column is UTC without a time zone, but the claim query compared it with `now()` in the session zone (IST), so every scheduled job looked 5.5 hours overdue. Fixed by storing every timestamp as `timestamptz`.
+- **A flaky call join.** An unacknowledged join could hang the UI, and a double join caused overlapping renegotiations. Fixed with an ack timeout and a negotiation id on every offer, answer and ICE candidate.
+- **The recorder could start without the client's voice** when the client's video track arrived before their audio. It now waits for both.
+- **The source folder for storage was missing from git.** An over-broad `.gitignore` rule matched it. Caught only by the fresh-clone build, which is why that check exists.
+- **A deploy-config trap:** `NODE_ENV=production` at build time would have skipped the build tools.
+- **Library versions newer than the agent knows well:** I pinned the last major versions it's reliable on, rather than let it guess at new APIs.
 
 ## AI inside the product
 
-- **The summary is constrained, then validated.** The response must match a JSON schema, and Zod validates it again. A schema failure throws, and the job queue retries it.
-- **Grounding.** The prompt says to use only what's in the transcript, to write "Not discussed on the call" rather than invent, and to treat the transcript as data, not instructions (prompt-injection guard).
-- **No LLM call when nothing was said.** An empty transcript gets a fixed response, so the model has nothing to invent.
-- **Cost visibility.** Input and output tokens are stored per summary.
-- **Next step: an eval set.** Real transcripts paired with reference summaries, scored for faithfulness, run on every prompt or model change.
+- **The summary is schema-constrained and validated again with Zod.** A malformed response throws, and the job queue retries.
+- **It's grounded:** only what's in the transcript, "Not discussed on the call" instead of invention, and the transcript treated as data, not instructions.
+- **No LLM call for an empty transcript,** so there's nothing for the model to invent.
+- **Resilience:** a fallback across several models handles free-tier "high demand" errors, which actually happened on the live run. Token usage is stored for each summary.
+- **Next step:** an evaluation set of real transcripts with reference summaries, scored for faithfulness, run on every prompt or model change.
