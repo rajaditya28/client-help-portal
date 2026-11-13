@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { CallsModule } from './calls/calls.module';
 import { AppConfigModule } from './config/config.module';
 import { HealthController } from './health.controller';
+import { MetricsModule } from './metrics/metrics.module';
 import { PrismaModule } from './prisma/prisma.service';
 import { RealtimeModule } from './realtime/realtime.module';
 import { RequestsModule } from './requests/requests.module';
@@ -28,6 +29,7 @@ const WEB_DIST = join(__dirname, '..', '..', 'web', 'dist');
     AiModule,
     RequestsModule,
     CallsModule,
+    MetricsModule,
     ...(existsSync(WEB_DIST)
       ? [ServeStaticModule.forRoot({ rootPath: WEB_DIST, exclude: ['/api/{*path}', '/socket.io/{*path}'] })]
       : []),

@@ -84,6 +84,53 @@ export interface CallDetailDto extends CallDto {
   summaryModel: string | null;
 }
 
+/* ---------------------------------- Metrics ---------------------------------- */
+
+export type PipelineStep = 'FINALIZE_RECORDING' | 'TRANSCRIBE' | 'SUMMARIZE';
+
+export interface StepMetricsDto {
+  step: PipelineStep;
+  done: number;
+  failed: number;
+  pending: number;
+  /** Extra attempts needed by jobs that eventually succeeded. */
+  retries: number;
+  p50Ms: number | null;
+  p95Ms: number | null;
+}
+
+export interface CallCostDto {
+  callId: string;
+  requestTitle: string;
+  clientName: string;
+  endedAt: string | null;
+  recordingMs: number | null;
+  /** Call ended -> summary stored. */
+  timeToSummaryMs: number | null;
+  sttProvider: string | null;
+  llmModel: string | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  sttUsd: number;
+  llmUsd: number;
+}
+
+export interface MetricsDto {
+  generatedAt: string;
+  callsTotal: number;
+  callsRecorded: number;
+  callsReady: number;
+  callsFailed: number;
+  timeToSummaryP50Ms: number | null;
+  timeToSummaryP95Ms: number | null;
+  steps: StepMetricsDto[];
+  totalUsd: number;
+  avgUsdPerReadyCall: number | null;
+  pricingNote: string;
+  recentCalls: CallCostDto[];
+  recentFailures: { callId: string; requestTitle: string; step: PipelineStep; attempts: number; error: string; at: string }[];
+}
+
 /* ---------------------------- Realtime (socket.io) ---------------------------- */
 
 export const SocketEvents = {

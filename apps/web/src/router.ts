@@ -9,6 +9,7 @@ export const router = createRouter({
     { path: '/call/:id', name: 'call', component: () => import('./views/CallView.vue'), props: true },
     { path: '/history', name: 'history', component: () => import('./views/HistoryView.vue') },
     { path: '/history/:id', name: 'call-detail', component: () => import('./views/CallDetailView.vue'), props: true },
+    { path: '/ops', name: 'ops', component: () => import('./views/OpsView.vue'), meta: { consultantOnly: true } },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 });
@@ -17,4 +18,5 @@ router.beforeEach((to) => {
   const auth = useAuth();
   if (!to.meta.public && !auth.user) return { name: 'login', query: { next: to.fullPath } };
   if (to.name === 'login' && auth.user) return { name: 'home' };
+  if (to.meta.consultantOnly && !auth.isConsultant) return { name: 'home' };
 });

@@ -3,6 +3,7 @@ import type {
   CallDto,
   HelpRequestDto,
   LoginResponse,
+  MetricsDto,
   UserDto,
 } from '@help/shared';
 
@@ -85,6 +86,7 @@ export const api = {
   endCall: (id: string) => post<CallDto>(`/calls/${id}/end`),
   completeRecording: (id: string) => post<void>(`/calls/${id}/recording/complete`),
   recordingUrl: (id: string) => request<{ url: string }>(`/calls/${id}/recording/url`),
+  metrics: () => request<MetricsDto>('/metrics'),
 
   /** Raw binary upload of one recorder chunk. Throws ApiError so the caller can decide to retry. */
   async uploadChunk(callId: string, segment: number, seq: number, offsetMs: number, blob: Blob, activity: unknown) {

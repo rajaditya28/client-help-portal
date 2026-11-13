@@ -157,6 +157,16 @@ describe('Access control: users only see their own data', () => {
       .expect(404);
   });
 
+  it('ops metrics are consultant-only and scoped to the consultant\'s own calls', async () => {
+    await http().get('/api/metrics').set(as(tokens.asha)).expect(403);
+    const mine = await http().get('/api/metrics').set(as(tokens.consultant)).expect(200);
+    expect(mine.body.callsTotal).toBe(1);
+    expect(mine.body.recentCalls.map((c: { callId: string }) => c.callId)).toEqual([ashaCallId]);
+    const other = await http().get('/api/metrics').set(as(tokens.otherConsultant)).expect(200);
+    expect(other.body.callsTotal).toBe(0);
+    expect(other.body.recentCalls).toEqual([]);
+  });
+
   it('a media token for one call cannot be used for another, and requests without a token are rejected', async () => {
     const { body } = await http().get(`/api/calls/${ashaCallId}/recording/url`).set(as(tokens.asha)).expect(200);
     const token = new URL(body.url, 'http://x').searchParams.get('token')!;

@@ -24,6 +24,7 @@ function logout() {
       <nav class="flex items-center gap-1 text-sm">
         <RouterLink to="/" class="btn-ghost" exact-active-class="bg-slate-100 text-slate-900">Dashboard</RouterLink>
         <RouterLink to="/history" class="btn-ghost" active-class="bg-slate-100 text-slate-900">Call history</RouterLink>
+        <RouterLink v-if="auth.isConsultant" to="/ops" class="btn-ghost" active-class="bg-slate-100 text-slate-900">Ops</RouterLink>
       </nav>
       <div class="ml-auto flex items-center gap-3">
         <div class="hidden text-right sm:block">
