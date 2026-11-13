@@ -18,7 +18,8 @@
     "db:setup": "npm run db:setup -w @help/api",
     "test": "npm run test -w @help/api",
     "typecheck": "npm run typecheck -w @help/web && npm run typecheck -w @help/api",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "eval": "npm run eval -w @help/api"
   },
   "devDependencies": {
     "@playwright/test": "1.65.0",

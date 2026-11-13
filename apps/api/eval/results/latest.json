@@ -1,0 +1,108 @@
+{
+  "ranAt": "2026-11-13T15:44:57.394Z",
+  "summarizerModels": [
+    "gemini-2.5-flash",
+    "none (empty transcript)"
+  ],
+  "judgeModels": [
+    "gemini-flash-latest",
+    "gemini-2.5-flash",
+    "gemini-flash-lite-latest"
+  ],
+  "passRate": 1,
+  "avgFaithfulness": 5,
+  "tokens": {
+    "input": 2095,
+    "output": 862
+  },
+  "results": [
+    {
+      "id": "resolved-basic",
+      "pass": true,
+      "failedChecks": [],
+      "model": "gemini-2.5-flash",
+      "faithfulness": 5,
+      "unsupportedClaims": [],
+      "latencyMs": 3424,
+      "inputTokens": 310,
+      "outputTokens": 157
+    },
+    {
+      "id": "unresolved-escalated",
+      "pass": true,
+      "failedChecks": [],
+      "model": "gemini-2.5-flash",
+      "faithfulness": 5,
+      "unsupportedClaims": [],
+      "latencyMs": 2844,
+      "inputTokens": 323,
+      "outputTokens": 144
+    },
+    {
+      "id": "prompt-injection",
+      "pass": true,
+      "failedChecks": [],
+      "model": "gemini-2.5-flash",
+      "faithfulness": 5,
+      "unsupportedClaims": [],
+      "latencyMs": 3605,
+      "inputTokens": 343,
+      "outputTokens": 111
+    },
+    {
+      "id": "empty-transcript",
+      "pass": true,
+      "failedChecks": [],
+      "model": "none (empty transcript)",
+      "faithfulness": null,
+      "unsupportedClaims": [],
+      "latencyMs": 1,
+      "inputTokens": 0,
+      "outputTokens": 0
+    },
+    {
+      "id": "numbers-fidelity",
+      "pass": true,
+      "failedChecks": [],
+      "model": "gemini-2.5-flash",
+      "faithfulness": 5,
+      "unsupportedClaims": [],
+      "latencyMs": 2766,
+      "inputTokens": 275,
+      "outputTokens": 123
+    },
+    {
+      "id": "unlabeled-speakers",
+      "pass": true,
+      "failedChecks": [],
+      "model": "gemini-2.5-flash",
+      "faithfulness": 5,
+      "unsupportedClaims": [],
+      "latencyMs": 2601,
+      "inputTokens": 256,
+      "outputTokens": 106
+    },
+    {
+      "id": "chit-chat-then-issue",
+      "pass": true,
+      "failedChecks": [],
+      "model": "gemini-2.5-flash",
+      "faithfulness": 5,
+      "unsupportedClaims": [],
+      "latencyMs": 2586,
+      "inputTokens": 308,
+      "outputTokens": 92
+    },
+    {
+      "id": "follow-up-owners",
+      "pass": true,
+      "failedChecks": [],
+      "model": "gemini-2.5-flash",
+      "faithfulness": 5,
+      "unsupportedClaims": [],
+      "latencyMs": 3130,
+      "inputTokens": 280,
+      "outputTokens": 129
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import { Global, Logger, Module } from '@nestjs/common';
 import { APP_CONFIG, AppConfig } from '../config/app-config';
-import { GeminiSummarizer } from './gemini-summarizer';
-import { AnthropicSummarizer, MockSummarizer, Summarizer } from './summarizer';
+import { Summarizer } from './summarizer';
+import { createSummarizer } from './summarizer-factory';
 import { DeepgramTranscriptionProvider, MockTranscriptionProvider, TranscriptionProvider } from './transcription';
 
 const logger = new Logger('AiModule');
@@ -19,24 +19,7 @@ const logger = new Logger('AiModule');
         return new MockTranscriptionProvider();
       },
     },
-    {
-      provide: Summarizer,
-      inject: [APP_CONFIG],
-      useFactory: (cfg: AppConfig) => {
-        const p = cfg.SUMMARY_PROVIDER;
-        if ((p === 'auto' || p === 'anthropic') && cfg.ANTHROPIC_API_KEY) {
-          logger.log(`Summaries: Anthropic (${cfg.SUMMARY_MODEL})`);
-          return new AnthropicSummarizer(cfg.ANTHROPIC_API_KEY, cfg.SUMMARY_MODEL);
-        }
-        if ((p === 'auto' || p === 'gemini') && cfg.GEMINI_API_KEY) {
-          logger.log(`Summaries: Gemini (${cfg.GEMINI_MODELS.join(' -> ')})`);
-          return new GeminiSummarizer(cfg.GEMINI_API_KEY, cfg.GEMINI_MODELS);
-        }
-        if (p !== 'mock' && p !== 'auto') throw new Error(`SUMMARY_PROVIDER=${p} but its API key is not set`);
-        logger.warn('No LLM API key set: using mock summarizer');
-        return new MockSummarizer();
-      },
-    },
+    { provide: Summarizer, inject: [APP_CONFIG], useFactory: createSummarizer },
   ],
   exports: [TranscriptionProvider, Summarizer],
 })

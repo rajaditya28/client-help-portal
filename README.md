@@ -127,6 +127,7 @@ See [`docs/AI_WORKFLOW.md`](docs/AI_WORKFLOW.md): how the work was checked, and 
 ```bash
 npm test          # API: access-control e2e (real app + test DB) + speaker attribution unit tests
 npm run e2e       # Playwright: two real Chromium users, fake media devices, full call → history flow (mock AI)
+npm run eval      # summary eval: 8 cases, deterministic checks + LLM faithfulness judge (needs GEMINI_API_KEY)
 REAL_AI=1 npx playwright test real-ai   # same, with two synthetic voices + real Deepgram and LLM
 REAL_AI=1 FORCE_RELAY=1 BASE_URL=https://client-help-portal.onrender.com npx playwright test real-ai   # live, relay-only
 ```
@@ -134,12 +135,16 @@ REAL_AI=1 FORCE_RELAY=1 BASE_URL=https://client-help-portal.onrender.com npx pla
 - **Access control** ([`access-control.e2e-spec.ts`](apps/api/test/access-control.e2e-spec.ts)): boots the real Nest app against a separate `*_test` database. Another client and an unassigned consultant get empty lists and 404s on every read and write, including transcript, summary, recording URL and chunk upload. Owners succeed (positive controls). A media token for one call can't be used for another. I checked that the test can fail by breaking `ownedBy()` on purpose: 7 of 9 cases failed.
 - **Browser E2E** ([`e2e/call-flow.spec.ts`](e2e/call-flow.spec.ts)): request → realtime push → call → consent → screen share → live chunk uploads → client refresh and rejoin → end → pipeline → a seekable recording with a real duration → click-to-seek and active-line highlight.
 
+- **Summary eval** ([`apps/api/eval`](apps/api/eval)): 8 cases, one per way a call summary goes wrong. They cover a dropped key fact, an invented resolution on an unresolved call, a prompt injection spoken on the call, mangled error codes and IDs, invented names for unlabelled speakers, small talk leaking in, follow-ups losing their owner, and an empty call. Each case has deterministic checks plus an LLM judge that lists unsupported claims. Results are saved to [`eval/results/latest.json`](apps/api/eval/results/latest.json) as the baseline for the next prompt or model change. Current baseline: **8/8, faithfulness 5.0/5**. I checked that it can fail: with a deliberately careless prompt it failed 2 of 3 targeted cases, catching an invented "resolved", the echoed injection payload and an invented refund promise.
+
+## Operations
+
+The consultant's **Ops** page shows how the post-call pipeline is doing for their calls. It covers time from call end to summary (p50/p95), per-step latency, retries and permanent failures, and an estimated cost per call (Deepgram minutes plus LLM tokens at list price). It's computed live from data the pipeline already records, so it can't drift from reality, and it's scoped to the consultant's own calls like every other query.
+
 ## Configuration
 
 See [`apps/api/.env.example`](apps/api/.env.example). Without the optional keys, the matching mock provider is used.
 
 ## Limitations and what I'd do next
 - Server-side recording (SFU egress) so recording doesn't depend on one browser tab.
-- An evaluation set for summaries (faithfulness to the transcript), run on every prompt or model change.
 - Transcripts for long calls in chunks, with streaming progress; today one call is sent whole, which is fine up to the 30-minute cap.
-- Metrics: job latency and failure counts per step, plus STT/LLM cost per call (token counts are already stored).

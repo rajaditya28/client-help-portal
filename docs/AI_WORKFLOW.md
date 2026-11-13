@@ -54,4 +54,5 @@ From automated checks:
 - **It's grounded:** only what's in the transcript, "Not discussed on the call" instead of invention, and the transcript treated as data, not instructions.
 - **No LLM call for an empty transcript,** so there's nothing for the model to invent.
 - **Resilience:** a fallback across several models handles free-tier "high demand" errors, which actually happened on the live run. Token usage is stored for each summary.
-- **Next step:** an evaluation set of real transcripts with reference summaries, scored for faithfulness, run on every prompt or model change.
+- **An eval set guards the prompt.** `npm run eval` runs the production summarizer over 8 cases, each targeting one failure mode: invented resolution, prompt injection, mangled IDs, invented names, small talk, follow-up owners, an empty call, plus a basic case. It checks each with deterministic rules and an LLM judge for unsupported claims. Baseline: 8/8, faithfulness 5.0/5. To check that the eval itself works, I swapped in a careless prompt. It failed 2 of 3 targeted cases and named the invented "resolved", the echoed injection payload and the made-up refund promise.
+- **Limitation I'm aware of:** the judge is also a Gemini model, so there's some self-grading bias. A cross-vendor judge would be stronger.
