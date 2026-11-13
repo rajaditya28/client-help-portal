@@ -5,7 +5,6 @@ import {
   Get,
   Headers,
   HttpCode,
-  Inject,
   NotFoundException,
   Param,
   ParseUUIDPipe,
@@ -21,9 +20,9 @@ import type { CallDetailDto, CallDto } from '@help/shared';
 import { AuthService } from '../auth/auth.service';
 import type { AuthUser } from '../auth/auth.types';
 import { CurrentUser, Public, Roles } from '../auth/decorators';
-import { APP_CONFIG, AppConfig } from '../config/app-config';
 import { StorageService, storageKeys } from '../storage/storage.service';
 import { CallsService } from './calls.service';
+import { IceServersService } from './ice-servers.service';
 
 class StartCallBody {
   @IsUUID()
@@ -43,12 +42,13 @@ export class CallsController {
     private readonly calls: CallsService,
     private readonly auth: AuthService,
     private readonly storage: StorageService,
-    @Inject(APP_CONFIG) private readonly cfg: AppConfig,
+    private readonly iceServers: IceServersService,
   ) {}
 
+  /** Per-user ICE config; TURN credentials are short-lived and minted on demand. */
   @Get('rtc-config')
-  rtcConfig() {
-    return { iceServers: this.cfg.ICE_SERVERS };
+  async rtcConfig() {
+    return { iceServers: await this.iceServers.get() };
   }
 
   @Get('calls')

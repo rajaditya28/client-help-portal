@@ -24,6 +24,40 @@ function launchWithVoice(wav: string): Promise<Browser> {
   });
 }
 
+/**
+ * FORCE_RELAY=1 makes both browsers refuse direct (host/STUN) paths, so the call can only
+ * connect through TURN, which is what happens across strict NATs and corporate firewalls.
+ */
+const FORCE_RELAY = !!process.env.FORCE_RELAY;
+const forceRelayScript = () => {
+  const Native = window.RTCPeerConnection;
+  const pcs: RTCPeerConnection[] = [];
+  (window as unknown as { __pcs: RTCPeerConnection[] }).__pcs = pcs;
+  class Relayed extends Native {
+    constructor(cfg?: RTCConfiguration) {
+      super({ ...cfg, iceTransportPolicy: 'relay' });
+      pcs.push(this);
+    }
+  }
+  window.RTCPeerConnection = Relayed;
+};
+
+/** Candidate type of the selected ICE pair of the most recent connection ('relay' when via TURN). */
+async function selectedCandidateType(page: Page): Promise<string | null> {
+  return page.evaluate(async () => {
+    const pcs = (window as unknown as { __pcs?: RTCPeerConnection[] }).__pcs ?? [];
+    const pc = pcs.at(-1);
+    if (!pc) return null;
+    const stats = await pc.getStats();
+    let pairId: string | undefined;
+    stats.forEach((r) => {
+      if (r.type === 'transport' && r.selectedCandidatePairId) pairId = r.selectedCandidatePairId;
+    });
+    const pair = pairId ? stats.get(pairId) : undefined;
+    return pair ? (stats.get(pair.localCandidateId)?.candidateType ?? null) : null;
+  });
+}
+
 async function loginAs(page: Page, email: string) {
   await page.goto('/login');
   await page.getByTestId(`login-${email}`).click();
@@ -36,6 +70,11 @@ test('real speech -> Deepgram transcript with speaker labels -> LLM summary', as
   const clientBrowser = await launchWithVoice('client-voice.wav');
   const consultant = await (await consultantBrowser.newContext({ baseURL })).newPage();
   const client = await (await clientBrowser.newContext({ baseURL })).newPage();
+  if (FORCE_RELAY) for (const p of [consultant, client]) await p.addInitScript(forceRelayScript);
+  for (const [who, p] of [['consultant', consultant], ['client', client]] as const) {
+    p.on('console', (m) => m.type() === 'error' && console.log(`[${who} console] ${m.text()}`));
+    p.on('pageerror', (e) => console.log(`[${who} pageerror] ${e.message}`));
+  }
 
   await loginAs(consultant, 'consultant@demo.test');
   await loginAs(client, 'asha@demo.test');
@@ -52,6 +91,12 @@ test('real speech -> Deepgram transcript with speaker labels -> LLM summary', as
   await client.getByTestId('consent-allow').click();
   await client.getByTestId('share-screen').click();
   await expect(consultant.getByTestId('recording-status')).toContainText('uploaded', { timeout: 30_000 });
+  if (FORCE_RELAY) {
+    await expect(consultant.getByTestId('peer-state')).toContainText('Connected', { timeout: 30_000 });
+    const types = [await selectedCandidateType(consultant), await selectedCandidateType(client)];
+    console.log(`selected ICE candidate types: consultant=${types[0]} client=${types[1]}`);
+    expect(types).toEqual(['relay', 'relay']);
+  }
 
   // Let the full 34 s conversation play into the recording.
   await consultant.waitForTimeout(36_000);

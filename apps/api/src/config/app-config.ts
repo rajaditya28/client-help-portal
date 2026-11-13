@@ -47,6 +47,10 @@ const schema = z.object({
       }
     }),
 
+  /** Optional Cloudflare TURN key: enables relayed calls through strict NATs/firewalls. */
+  TURN_KEY_ID: z.string().optional().transform((v) => v || undefined),
+  TURN_KEY_API_TOKEN: z.string().optional().transform((v) => v || undefined),
+
   /** Background worker poll interval. */
   JOB_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(1000),
   /** Set to "false" to run the API without the in-process worker (e.g. in tests). */
