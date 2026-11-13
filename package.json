@@ -1,0 +1,34 @@
+{
+  "name": "client-help-portal",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Consultant / client help portal with screen-sharing calls, recording, transcripts and summaries.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "postinstall": "npm run build -w @help/shared",
+    "dev": "npm run build -w @help/shared && concurrently -k -n api,web -c blue,green \"npm run dev -w @help/api\" \"npm run dev -w @help/web\"",
+    "build": "npm run build -w @help/shared && npm run build -w @help/web && npm run build -w @help/api",
+    "start": "npm run start -w @help/api",
+    "db:setup": "npm run db:setup -w @help/api",
+    "test": "npm run test -w @help/api",
+    "typecheck": "npm run typecheck -w @help/web && npm run typecheck -w @help/api",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "concurrently": "9.2.5"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "ffmpeg-static@5.3.0": true,
+    "prisma@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "esbuild@0.28.2": true
+  }
+}

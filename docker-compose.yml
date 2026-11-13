@@ -1,0 +1,37 @@
+# docker compose up --build   ->   http://localhost:3000
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: helpportal
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/helpportal
+      JWT_SECRET: local-docker-secret-change-me
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_DIR: /data/storage
+      # Optional: real AI providers. Leave empty to use the built-in mocks.
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes:
+      - recordings:/data/storage
+
+volumes:
+  db-data:
+  recordings:

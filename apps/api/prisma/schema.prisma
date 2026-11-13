@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CONSULTANT
+  CLIENT
+}
+
+enum RequestStatus {
+  OPEN
+  IN_CALL
+  RESOLVED
+}
+
+enum CallStatus {
+  RINGING
+  ACTIVE
+  ENDED
+}
+
+enum ConsentStatus {
+  PENDING
+  GRANTED
+  DECLINED
+}
+
+enum ProcessingStatus {
+  NOT_RECORDED
+  RECORDING
+  QUEUED
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum JobType {
+  FINALIZE_RECORDING
+  TRANSCRIBE
+  SUMMARIZE
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  DONE
+  FAILED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  role         Role
+  passwordHash String
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+
+  /// A client belongs to the consultant who supports them.
+  consultantId String?
+  consultant   User?   @relation("ConsultantClients", fields: [consultantId], references: [id])
+  clients      User[]  @relation("ConsultantClients")
+
+  requestsAsClient     HelpRequest[] @relation("RequestClient")
+  requestsAsConsultant HelpRequest[] @relation("RequestConsultant")
+  callsAsClient        Call[]        @relation("CallClient")
+  callsAsConsultant    Call[]        @relation("CallConsultant")
+}
+
+model HelpRequest {
+  id           String        @id @default(uuid())
+  title        String
+  description  String
+  status       RequestStatus @default(OPEN)
+  clientId     String
+  client       User          @relation("RequestClient", fields: [clientId], references: [id])
+  consultantId String
+  consultant   User          @relation("RequestConsultant", fields: [consultantId], references: [id])
+  calls        Call[]
+  createdAt    DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime      @updatedAt @db.Timestamptz(3)
+
+  @@index([clientId, createdAt])
+  @@index([consultantId, createdAt])
+}
+
+model Call {
+  id           String      @id @default(uuid())
+  requestId    String
+  request      HelpRequest @relation(fields: [requestId], references: [id])
+  /// Denormalised from the request so every access check is a single-row predicate.
+  clientId     String
+  client       User        @relation("CallClient", fields: [clientId], references: [id])
+  consultantId String
+  consultant   User        @relation("CallConsultant", fields: [consultantId], references: [id])
+
+  status           CallStatus       @default(RINGING)
+  consent          ConsentStatus    @default(PENDING)
+  consentAt        DateTime? @db.Timestamptz(3)
+  processingStatus ProcessingStatus @default(NOT_RECORDED)
+  processingError  String?
+
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  startedAt DateTime? @db.Timestamptz(3)
+  endedAt   DateTime? @db.Timestamptz(3)
+
+  chunks     RecordingChunk[]
+  recording  Recording?
+  transcript Transcript?
+  summary    Summary?
+  jobs       Job[]
+
+  @@index([clientId, createdAt])
+  @@index([consultantId, createdAt])
+  @@index([requestId])
+}
+
+/// One MediaRecorder blob, uploaded while the call is running.
+/// `segment` increments each time recording restarts (e.g. after a page refresh).
+model RecordingChunk {
+  id         String   @id @default(uuid())
+  callId     String
+  call       Call     @relation(fields: [callId], references: [id], onDelete: Cascade)
+  segment    Int
+  seq        Int
+  /// Milliseconds since the call started when this segment began recording.
+  segmentOffsetMs Int
+  sizeBytes  Int
+  storageKey String
+  /// Voice-activity samples captured in the browser while this chunk was recorded:
+  /// [{ t: msSinceSegmentStart, c: consultantSpeaking, k: clientSpeaking }]
+  /// Used to attribute transcript lines to speakers without guessing.
+  activity   Json?
+  receivedAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@unique([callId, segment, seq])
+}
+
+/// The finalised, seekable recording produced after the call ends.
+model Recording {
+  id         String   @id @default(uuid())
+  callId     String   @unique
+  call       Call     @relation(fields: [callId], references: [id], onDelete: Cascade)
+  storageKey String
+  mimeType   String
+  sizeBytes  Int
+  durationMs Int?
+  /// Start (ms) of each recorder segment on the final timeline; maps chunk activity onto it.
+  segmentStartsMs Json
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+}
+
+model Transcript {
+  id        String   @id @default(uuid())
+  callId    String   @unique
+  call      Call     @relation(fields: [callId], references: [id], onDelete: Cascade)
+  /// TranscriptSegmentDto[]
+  segments  Json
+  provider  String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+}
+
+model Summary {
+  id           String   @id @default(uuid())
+  callId       String   @unique
+  call         Call     @relation(fields: [callId], references: [id], onDelete: Cascade)
+  /// SummaryDto
+  content      Json
+  model        String
+  inputTokens  Int?
+  outputTokens Int?
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+}
+
+/// Durable background-job queue, claimed with FOR UPDATE SKIP LOCKED.
+model Job {
+  id          String    @id @default(uuid())
+  type        JobType
+  callId      String
+  call        Call      @relation(fields: [callId], references: [id], onDelete: Cascade)
+  status      JobStatus @default(QUEUED)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  runAt       DateTime  @default(now()) @db.Timestamptz(3)
+  lockedAt    DateTime? @db.Timestamptz(3)
+  lastError   String?
+  durationMs  Int?
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@unique([callId, type])
+  @@index([status, runAt])
+}
