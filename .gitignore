@@ -3,7 +3,7 @@ dist/
 .env
 .env.*
 !.env.example
-storage/
+/apps/api/storage/
 coverage/
 *.log
 .DS_Store
