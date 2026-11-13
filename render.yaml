@@ -13,8 +13,8 @@ services:
     envVars:
       - key: NODE_VERSION
         value: '22'
-      - key: NODE_ENV
-        value: production
+      # No NODE_ENV=production here: Render also applies env vars at build time, and
+      # `npm ci` would then skip the dev dependencies the build needs (tsc, nest, vite).
       - key: JWT_SECRET
         generateValue: true
       - key: DATABASE_URL
