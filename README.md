@@ -9,7 +9,9 @@ A consultant supports several clients. A client raises a help request, the consu
 ## Try it
 
 ### Option A: live demo
-> Live URL: _added after deployment_
+**https://client-help-portal.onrender.com** (Render free tier · Neon Postgres · Cloudflare R2 · Deepgram · Gemini)
+
+Asha's history already has one sample call (a real recording with transcript and summary) so you can see the end result straight away. A GitHub Action keeps the free instance warm; if it ever went to sleep, the first load takes about a minute.
 
 ### Option B: one command (Docker)
 ```bash
