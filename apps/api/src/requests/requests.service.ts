@@ -9,8 +9,8 @@ import { RealtimeService } from '../realtime/realtime.service';
 const REQUEST_INCLUDE = {
   client: PERSON_SELECT,
   consultant: PERSON_SELECT,
-  // The in-progress call, if any, so the UI can offer "Join call".
-  calls: { where: { status: { not: 'ENDED' as const } }, select: { id: true }, take: 1 },
+  // Newest first: the in-progress call (for "Join call") and the latest ended one (for "View call").
+  calls: { select: { id: true, status: true }, orderBy: { createdAt: 'desc' as const } },
 };
 
 @Injectable()

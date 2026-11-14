@@ -34,6 +34,10 @@ export default defineConfig({
     url: 'http://localhost:3000/api/health',
     reuseExistingServer: true,
     timeout: 60_000,
-    env: { JOB_POLL_INTERVAL_MS: '300' },
+    // Mock AI unless REAL_AI=1, even if apps/api/.env holds real keys (empty env vars win over .env).
+    env: {
+      JOB_POLL_INTERVAL_MS: '300',
+      ...(process.env.REAL_AI ? {} : { DEEPGRAM_API_KEY: '', GEMINI_API_KEY: '', ANTHROPIC_API_KEY: '' }),
+    },
   },
 });

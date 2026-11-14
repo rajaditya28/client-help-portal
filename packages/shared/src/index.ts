@@ -43,6 +43,8 @@ export interface HelpRequestDto {
   consultant: Pick<UserDto, 'id' | 'name'>;
   /** The call currently in progress for this request, if any. */
   activeCallId: string | null;
+  /** The most recent ended call, so the request can link straight to its recording and summary. */
+  lastCallId: string | null;
 }
 
 export interface CallDto {

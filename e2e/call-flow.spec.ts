@@ -100,7 +100,13 @@ test('request → live call with screen share → consented recording → refres
   await consultant.goto('/history');
   await expect(consultant.locator('td', { hasText: title })).toBeVisible();
 
+  // 10. The request on the client's dashboard links straight to this call's page.
+  const callUrl = client.url();
   await client.screenshot({ path: 'e2e/artifacts/client-history.png', fullPage: true });
+  await client.goto('/');
+  await client.locator('li', { hasText: title }).getByRole('link', { name: 'View call' }).click();
+  await expect(client).toHaveURL(callUrl);
+  await expect(client.getByTestId('summary')).toBeVisible();
   await consultantCtx.close();
   await clientCtx.close();
 });

@@ -126,6 +126,14 @@ function join(callId: string) {
                 <p class="mt-0.5 text-xs text-slate-500">{{ timeAgo(r.createdAt, now) }} · {{ r.consultant.name }}</p>
               </div>
               <button v-if="r.activeCallId" class="btn-primary" @click="join(r.activeCallId)">Join call</button>
+              <RouterLink
+                v-else-if="r.lastCallId"
+                :to="{ name: 'call-detail', params: { id: r.lastCallId } }"
+                class="btn-secondary"
+                :data-testid="`view-call-${r.id}`"
+              >
+                View call
+              </RouterLink>
             </li>
           </ul>
         </div>

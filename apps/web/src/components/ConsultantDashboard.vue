@@ -99,6 +99,14 @@ function seen(id: string) {
             <p class="mt-1 text-xs text-slate-500">{{ r.client.name }} · {{ timeAgo(r.createdAt, now) }}</p>
           </div>
           <div class="flex shrink-0 gap-2">
+            <RouterLink
+              v-if="r.lastCallId && !r.activeCallId"
+              :to="{ name: 'call-detail', params: { id: r.lastCallId } }"
+              class="btn-ghost"
+              :data-testid="`view-call-${r.id}`"
+            >
+              View call
+            </RouterLink>
             <button class="btn-secondary" :disabled="busyId === r.id || !!r.activeCallId" @click="resolve(r)">Mark resolved</button>
             <button class="btn-primary" :disabled="busyId === r.id" :data-testid="`start-call-${r.id}`" @click="startCall(r)">
               {{ r.activeCallId ? 'Rejoin call' : 'Start call' }}
@@ -113,7 +121,17 @@ function seen(id: string) {
       <ul class="card mt-3 divide-y divide-slate-100">
         <li v-for="r in resolved" :key="r.id" class="flex items-center justify-between px-5 py-3 text-sm">
           <span>{{ r.title }} <span class="text-slate-500">· {{ r.client.name }}</span></span>
-          <span class="text-xs text-slate-500">{{ timeAgo(r.updatedAt, now) }}</span>
+          <span class="flex items-center gap-3">
+            <span class="text-xs text-slate-500">{{ timeAgo(r.updatedAt, now) }}</span>
+            <RouterLink
+              v-if="r.lastCallId"
+              :to="{ name: 'call-detail', params: { id: r.lastCallId } }"
+              class="font-medium text-indigo-600 hover:underline"
+              :data-testid="`view-call-${r.id}`"
+            >
+              View call
+            </RouterLink>
+          </span>
         </li>
       </ul>
     </details>

@@ -9,7 +9,8 @@ export const PERSON_SELECT = { select: { id: true, name: true } } as const;
 export type RequestRow = HelpRequest & {
   client: Person;
   consultant: Person;
-  calls: Pick<Call, 'id'>[];
+  /** All calls for the request, newest first. */
+  calls: Pick<Call, 'id' | 'status'>[];
 };
 
 export function toRequestDto(r: RequestRow): HelpRequestDto {
@@ -22,7 +23,8 @@ export function toRequestDto(r: RequestRow): HelpRequestDto {
     updatedAt: r.updatedAt.toISOString(),
     client: person(r.client),
     consultant: person(r.consultant),
-    activeCallId: r.calls[0]?.id ?? null,
+    activeCallId: r.calls.find((c) => c.status !== 'ENDED')?.id ?? null,
+    lastCallId: r.calls.find((c) => c.status === 'ENDED')?.id ?? null,
   };
 }
 
