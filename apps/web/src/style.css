@@ -1,7 +1,38 @@
 @import 'tailwindcss';
 
+/*
+ * Service-desk palette: a deep teal shell around a cool white work area.
+ * Amber is reserved for "needs you" (new or waiting requests), rose for "live / recording".
+ */
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Public Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --color-brand-50: #edf6f5;
+  --color-brand-100: #d3ebe8;
+  --color-brand-200: #a9d6d1;
+  --color-brand-300: #74bab3;
+  --color-brand-400: #3e9a93;
+  --color-brand-500: #1f7f78;
+  --color-brand-600: #156862;
+  --color-brand-700: #125651;
+  --color-brand-800: #104744;
+  --color-brand-900: #0e3b39;
+  --color-brand-950: #082725;
+
+  /* Neutrals tinted toward the teal shell instead of stock blue-grey. */
+  --color-slate-50: #f4f7f7;
+  --color-slate-100: #e8eeee;
+  --color-slate-200: #d5dfe0;
+  --color-slate-300: #b4c3c5;
+  --color-slate-400: #869a9d;
+  --color-slate-500: #5d7376;
+  --color-slate-600: #465b5e;
+  --color-slate-700: #34484b;
+  --color-slate-800: #223437;
+  --color-slate-900: #142427;
+  --color-slate-950: #0a1719;
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 html,
@@ -12,53 +43,89 @@ body,
 
 body {
   @apply bg-slate-50 text-slate-900 antialiased;
+  font-feature-settings: 'ss01' on;
+  caret-color: var(--color-brand-600);
+  accent-color: var(--color-brand-600);
+  scrollbar-color: var(--color-slate-300) transparent;
 }
 
-/* Tailwind v4's reset gives buttons `cursor: default`; restore the pointer on everything clickable. */
+::selection {
+  background: var(--color-brand-200);
+  color: var(--color-brand-950);
+}
+
 @layer base {
+  /* Tailwind v4's reset gives buttons `cursor: default`; restore the pointer on everything clickable. */
   button:not(:disabled),
   [role='button']:not([aria-disabled='true']),
   summary,
   label[for] {
     cursor: pointer;
   }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+
+  table,
+  time {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition
-    disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500;
+  @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-sm font-medium whitespace-nowrap
+    transition-[background-color,border-color,color,transform] duration-150 ease-out
+    active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
 }
 @utility btn-primary {
-  @apply btn bg-indigo-600 text-white shadow-sm hover:bg-indigo-500;
+  @apply btn bg-brand-700 text-white hover:bg-brand-600;
 }
 @utility btn-secondary {
-  @apply btn border border-slate-300 bg-white text-slate-700 shadow-sm hover:bg-slate-50;
+  @apply btn border border-slate-300 bg-white text-slate-800 hover:border-slate-400 hover:bg-slate-50;
 }
 @utility btn-danger {
-  @apply btn bg-rose-600 text-white shadow-sm hover:bg-rose-500;
+  @apply btn bg-rose-700 text-white hover:bg-rose-600;
 }
 @utility btn-ghost {
-  @apply btn text-slate-600 hover:bg-slate-100;
+  @apply btn text-slate-600 hover:bg-slate-100 hover:text-slate-900;
 }
+/* A bordered panel. Depth is reserved for things that float (dialogs, the sticky shell). */
 @utility card {
-  @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+  @apply rounded-[10px] border border-slate-200 bg-white;
 }
 @utility input {
-  @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-slate-400
-    focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20;
+  @apply block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-500
+    transition-[border-color,box-shadow] duration-150 focus:border-brand-500 focus:outline-none focus:ring-3 focus:ring-brand-500/20;
 }
 @utility label {
   @apply mb-1 block text-sm font-medium text-slate-700;
 }
+/* Short request reference, derived from its id: the ticket number of the service desk. */
+@utility ticket-ref {
+  @apply inline-flex items-center rounded bg-slate-100 px-1.5 py-px text-xs font-semibold tracking-wide text-slate-600 tabular-nums;
+}
 
+/* A request that just arrived: one tint that fades, so the eye finds it without a banner. */
 @keyframes flash-in {
   from {
-    background-color: rgb(224 231 255);
+    background-color: rgb(254 243 199);
   }
   to {
     background-color: transparent;
   }
 }
 .flash-in {
-  animation: flash-in 2.5s ease-out;
+  animation: flash-in 2.5s var(--ease-out-quint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

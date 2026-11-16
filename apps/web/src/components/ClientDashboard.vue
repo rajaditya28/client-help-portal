@@ -5,7 +5,8 @@ import type { CallDto } from '@help/shared';
 import { useCallEvents, useRequests } from '@/composables/useRequests';
 import { api } from '@/lib/api';
 import { timeAgo } from '@/lib/format';
-import StatusBadge from './StatusBadge.vue';
+import { ticketRef } from '@/lib/track';
+import TicketTrack from './TicketTrack.vue';
 
 const router = useRouter();
 const { requests, loading, error, upsert, reload } = useRequests();
@@ -59,29 +60,27 @@ function join(callId: string) {
   <div class="mx-auto max-w-6xl px-4 py-8">
     <div
       v-if="liveCall"
-      class="mb-6 flex items-center justify-between gap-4 rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-4"
+      class="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-[10px] border border-rose-200 bg-white px-5 py-4 shadow-[0_8px_24px_-12px_rgb(190_18_60/0.35)]"
       data-testid="incoming-call"
     >
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3.5">
         <span class="relative flex h-3 w-3">
-          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
-          <span class="relative inline-flex h-3 w-3 rounded-full bg-indigo-600" />
+          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+          <span class="relative inline-flex h-3 w-3 rounded-full bg-rose-600" />
         </span>
         <div>
-          <p class="font-medium text-indigo-900">
-            {{ liveCall.who }} is calling you
-          </p>
-          <p class="text-sm text-indigo-700">About “{{ liveCall.title }}”. Join to share your screen and talk.</p>
+          <p class="font-semibold text-slate-900">{{ liveCall.who }} is calling you</p>
+          <p class="text-sm text-slate-600">About “{{ liveCall.title }}”. Join to share your screen and talk.</p>
         </div>
       </div>
       <button class="btn-primary" data-testid="join-call" @click="join(liveCall.id)">Join call</button>
     </div>
 
     <div class="grid gap-6 lg:grid-cols-5">
-      <section class="card p-5 lg:col-span-2">
-        <h2 class="font-semibold">Raise a help request</h2>
-        <p class="mt-1 text-sm text-slate-500">Your consultant sees it right away and can start a call.</p>
-        <form class="mt-4 space-y-3" @submit.prevent="submit">
+      <section class="card self-start p-5 lg:col-span-2">
+        <h2 class="font-semibold text-slate-900">Raise a help request</h2>
+        <p class="mt-1 text-sm text-slate-600">Your consultant sees it right away and can start a call.</p>
+        <form class="mt-5 space-y-4" @submit.prevent="submit">
           <div>
             <label class="label" for="title">What are you stuck on?</label>
             <input
@@ -96,7 +95,7 @@ function join(callId: string) {
             />
           </div>
           <div>
-            <label class="label" for="desc">Details <span class="font-normal text-slate-400">(optional)</span></label>
+            <label class="label" for="desc">Details <span class="font-normal text-slate-500">(optional)</span></label>
             <textarea
               id="desc"
               v-model="description"
@@ -105,41 +104,52 @@ function join(callId: string) {
               placeholder="What did you try? What happened?"
             />
           </div>
-          <p v-if="formError" class="text-sm text-rose-600">{{ formError }}</p>
-          <button class="btn-primary w-full" :disabled="submitting" data-testid="submit-request">Send request</button>
+          <p v-if="formError" class="text-sm text-red-800">{{ formError }}</p>
+          <button class="btn-primary w-full" :disabled="submitting" data-testid="submit-request">
+            {{ submitting ? 'Sending…' : 'Send request' }}
+          </button>
         </form>
       </section>
 
       <section class="lg:col-span-3">
-        <h2 class="mb-3 font-semibold">My requests</h2>
-        <p v-if="error" class="mb-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{{ error }}</p>
+        <h2 class="mb-3 font-semibold text-slate-900">My requests</h2>
+        <p v-if="error" class="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">{{ error }}</p>
         <div class="card overflow-hidden">
-          <div v-if="loading" class="p-8 text-center text-sm text-slate-500">Loading…</div>
-          <div v-else-if="!requests.length" class="p-10 text-center text-sm text-slate-500">No requests yet.</div>
-          <ul v-else class="divide-y divide-slate-100">
-            <li v-for="r in requests" :key="r.id" class="flex items-center gap-4 px-5 py-4">
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                  <span class="truncate font-medium">{{ r.title }}</span>
-                  <StatusBadge :status="r.status" />
-                </div>
-                <p class="mt-0.5 text-xs text-slate-500">{{ timeAgo(r.createdAt, now) }} · {{ r.consultant.name }}</p>
+          <div v-if="loading" class="space-y-3 p-5" aria-label="Loading requests">
+            <div v-for="n in 2" :key="n" class="h-14 animate-pulse rounded-md bg-slate-100" />
+          </div>
+          <div v-else-if="!requests.length" class="px-6 py-12 text-center">
+            <p class="font-medium text-slate-800">No requests yet</p>
+            <p class="mx-auto mt-1 max-w-xs text-sm text-slate-600">Describe what you're stuck on and your consultant will call you here.</p>
+          </div>
+          <ul v-else class="divide-y divide-slate-200/70">
+            <li v-for="r in requests" :key="r.id" class="grid grid-cols-[auto_1fr] items-start gap-x-4 gap-y-3 px-5 py-4 sm:grid-cols-[auto_1fr_auto]">
+              <span class="ticket-ref mt-0.5">{{ ticketRef(r.id) }}</span>
+              <div class="min-w-0">
+                <span class="block font-semibold text-slate-900">{{ r.title }}</span>
+                <p class="mt-1 flex gap-3 text-xs">
+                  <span class="font-medium text-slate-700">{{ r.consultant.name }}</span>
+                  <span class="text-slate-500">{{ timeAgo(r.createdAt, now) }}</span>
+                </p>
+                <TicketTrack :request="r" class="mt-3.5" />
               </div>
-              <button v-if="r.activeCallId" class="btn-primary" @click="join(r.activeCallId)">Join call</button>
-              <RouterLink
-                v-else-if="r.lastCallId"
-                :to="{ name: 'call-detail', params: { id: r.lastCallId } }"
-                class="btn-secondary"
-                :data-testid="`view-call-${r.id}`"
-              >
-                View call
-              </RouterLink>
+              <div class="col-start-2 sm:col-start-auto">
+                <button v-if="r.activeCallId" class="btn-primary" @click="join(r.activeCallId)">Join call</button>
+                <RouterLink
+                  v-else-if="r.lastCallId"
+                  :to="{ name: 'call-detail', params: { id: r.lastCallId } }"
+                  class="btn-secondary"
+                  :data-testid="`view-call-${r.id}`"
+                >
+                  View call
+                </RouterLink>
+              </div>
             </li>
           </ul>
         </div>
-        <p class="mt-3 text-sm text-slate-500">
+        <p class="mt-3 text-sm text-slate-600">
           Recordings, transcripts and summaries of past calls are in
-          <RouterLink to="/history" class="font-medium text-indigo-600 hover:underline">Call history</RouterLink>.
+          <RouterLink to="/history" class="font-medium text-brand-700 underline decoration-brand-300 underline-offset-2 hover:decoration-brand-600">Call history</RouterLink>.
         </p>
       </section>
     </div>

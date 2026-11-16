@@ -45,6 +45,8 @@ export interface HelpRequestDto {
   activeCallId: string | null;
   /** The most recent ended call, so the request can link straight to its recording and summary. */
   lastCallId: string | null;
+  /** State of the newest call (live or ended), for the request's progress track. */
+  latestCall: { status: CallStatus; processingStatus: ProcessingStatus } | null;
 }
 
 export interface CallDto {

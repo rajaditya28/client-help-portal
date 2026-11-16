@@ -10,7 +10,7 @@ const REQUEST_INCLUDE = {
   client: PERSON_SELECT,
   consultant: PERSON_SELECT,
   // Newest first: the in-progress call (for "Join call") and the latest ended one (for "View call").
-  calls: { select: { id: true, status: true }, orderBy: { createdAt: 'desc' as const } },
+  calls: { select: { id: true, status: true, processingStatus: true }, orderBy: { createdAt: 'desc' as const } },
 };
 
 @Injectable()

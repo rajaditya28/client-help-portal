@@ -25,28 +25,28 @@ watch(activeIndex, (i) => {
 });
 
 function color(s: TranscriptSegmentDto) {
-  if (s.role === 'CONSULTANT') return 'text-indigo-700';
-  if (s.role === 'CLIENT') return 'text-emerald-700';
+  if (s.role === 'CONSULTANT') return 'text-brand-700';
+  if (s.role === 'CLIENT') return 'text-violet-700';
   return 'text-slate-600';
 }
 </script>
 
 <template>
   <div class="card flex max-h-[38rem] flex-col">
-    <div class="border-b border-slate-100 px-4 py-3">
-      <h2 class="font-semibold">Transcript</h2>
-      <p class="text-xs text-slate-500">Click a line to jump to that moment in the recording.</p>
+    <div class="border-b border-slate-200/70 px-4 py-3">
+      <h2 class="font-semibold text-slate-900">Transcript</h2>
+      <p class="text-xs text-slate-600">Click a line to jump to that moment in the recording.</p>
     </div>
-    <div v-if="!segments.length" class="p-6 text-sm text-slate-500">No speech was detected in this recording.</div>
+    <div v-if="!segments.length" class="p-6 text-sm text-slate-600">No speech was detected in this recording.</div>
     <ol v-else ref="list" class="flex-1 overflow-y-auto p-2" data-testid="transcript">
       <li v-for="(s, i) in segments" :key="i" :data-index="i" :data-active="i === activeIndex">
         <button
-          class="w-full rounded-lg px-3 py-2 text-left transition hover:bg-slate-50"
-          :class="{ 'bg-indigo-50 hover:bg-indigo-50': i === activeIndex }"
+          class="w-full rounded-md px-3 py-2 text-left transition-colors duration-150 hover:bg-slate-50"
+          :class="{ 'bg-brand-50 shadow-[inset_2px_0_0_var(--color-brand-600)] hover:bg-brand-50': i === activeIndex }"
           @click="emit('seek', s.startMs)"
         >
           <div class="flex items-baseline gap-2 text-xs">
-            <span class="font-mono tabular-nums text-slate-400">{{ clock(s.startMs) }}</span>
+            <span class="tabular-nums text-slate-500">{{ clock(s.startMs) }}</span>
             <span class="font-semibold" :class="color(s)">{{ s.speaker }}</span>
           </div>
           <p class="mt-0.5 text-sm leading-relaxed text-slate-800">{{ s.text }}</p>

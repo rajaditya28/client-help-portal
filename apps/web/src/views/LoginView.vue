@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import type { HelpRequestDto } from '@help/shared';
+import BrandMark from '@/components/BrandMark.vue';
+import TicketTrack from '@/components/TicketTrack.vue';
 import { useAuth } from '@/stores/auth';
 
 const auth = useAuth();
@@ -20,6 +23,21 @@ const demoUsers = [
   { email: 'chen@demo.test', name: 'Chen Li', role: 'Client' },
 ];
 
+// Illustration only: what a request's track looks like once it has been handled end to end.
+const example: HelpRequestDto = {
+  id: 'a3f20000-0000-0000-0000-000000000000',
+  title: "Invoice template won't save",
+  description: '',
+  status: 'RESOLVED',
+  createdAt: '',
+  updatedAt: '',
+  client: { id: 'c', name: 'Asha Verma' },
+  consultant: { id: 'p', name: 'Priya Sharma' },
+  activeCallId: null,
+  lastCallId: null,
+  latestCall: { status: 'ENDED', processingStatus: 'READY' },
+};
+
 async function submit(e = email.value, p = password.value) {
   error.value = '';
   busy.value = true;
@@ -36,39 +54,62 @@ async function submit(e = email.value, p = password.value) {
 </script>
 
 <template>
-  <div class="flex min-h-full items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-emerald-50 px-4 py-12">
-    <div class="w-full max-w-md">
-      <div class="mb-8 text-center">
-        <span class="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/30">
-          <svg viewBox="0 0 24 24" class="h-6 w-6" fill="currentColor"><path d="M4 5h16v11H9l-5 4z" /></svg>
-        </span>
-        <h1 class="text-2xl font-semibold tracking-tight">Client Help Portal</h1>
-        <p class="mt-1 text-sm text-slate-500">Get help over a recorded screen-sharing call.</p>
+  <div class="flex min-h-dvh flex-col lg:flex-row">
+    <aside class="flex flex-col justify-between gap-10 bg-brand-950 px-6 py-8 text-white sm:px-10 lg:w-[46%] lg:px-14 lg:py-12">
+      <div class="flex items-center gap-2.5 font-semibold tracking-tight">
+        <BrandMark class="h-8 w-8" />
+        Client Help Portal
       </div>
+      <div class="max-w-md">
+        <h1 class="text-3xl leading-tight font-semibold tracking-tight text-balance lg:text-4xl">Stuck in the software? Show your consultant.</h1>
+        <p class="mt-4 text-base leading-relaxed text-brand-100/85">
+          Raise a request, share your screen on a call, and both of you get the recording, a transcript and a summary afterwards.
+        </p>
+      </div>
+      <figure class="hidden max-w-md lg:block">
+        <div class="rounded-[10px] bg-white p-5 text-slate-900 shadow-[0_20px_40px_-20px_rgb(0_0_0/0.6)]">
+          <div class="flex items-start gap-3">
+            <span class="ticket-ref mt-0.5">#A3F2</span>
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold">{{ example.title }}</p>
+              <p class="mt-1 flex gap-3 text-xs">
+                <span class="font-medium text-slate-700">Asha Verma</span>
+                <span class="text-slate-500">Priya Sharma</span>
+              </p>
+              <TicketTrack :request="example" class="mt-3.5" />
+            </div>
+          </div>
+        </div>
+        <figcaption class="mt-3 text-sm text-brand-100/70">An example request, tracked from raised to resolved.</figcaption>
+      </figure>
+    </aside>
 
-      <div class="card p-6">
-        <p class="mb-3 text-sm font-medium text-slate-700">Sign in as a demo user</p>
-        <div class="grid grid-cols-2 gap-2">
+    <section class="flex flex-1 items-center justify-center px-4 py-10 sm:px-8">
+      <div class="w-full max-w-sm">
+        <h2 class="text-xl font-semibold tracking-tight">Sign in</h2>
+        <p class="mt-1 text-sm text-slate-600">Pick a demo user. Everyone's password is password123.</p>
+
+        <div class="mt-5 grid grid-cols-2 gap-2">
           <button
             v-for="u in demoUsers"
             :key="u.email"
-            class="rounded-lg border border-slate-200 px-3 py-2.5 text-left transition hover:border-indigo-300 hover:bg-indigo-50/50 disabled:opacity-50"
+            class="rounded-md border border-slate-300 bg-white px-3 py-2.5 text-left transition-[border-color,background-color,transform] duration-150 hover:border-brand-400 hover:bg-brand-50/60 active:scale-[0.97] disabled:opacity-50"
             :disabled="busy"
             :data-testid="`login-${u.email}`"
             @click="submit(u.email, DEMO_PASSWORD)"
           >
-            <div class="text-sm font-medium">{{ u.name }}</div>
-            <div class="text-xs" :class="u.role === 'Consultant' ? 'text-indigo-600' : 'text-emerald-600'">{{ u.role }}</div>
+            <div class="text-sm font-semibold text-slate-900">{{ u.name }}</div>
+            <div class="text-xs" :class="u.role === 'Consultant' ? 'font-medium text-brand-700' : 'text-slate-600'">{{ u.role }}</div>
           </button>
         </div>
 
-        <div class="my-5 flex items-center gap-3 text-xs text-slate-400">
+        <div class="my-6 flex items-center gap-3 text-xs text-slate-500">
           <div class="h-px flex-1 bg-slate-200" />
           or with email
           <div class="h-px flex-1 bg-slate-200" />
         </div>
 
-        <form class="space-y-3" @submit.prevent="submit()">
+        <form class="space-y-4" @submit.prevent="submit()">
           <div>
             <label class="label" for="email">Email</label>
             <input id="email" v-model="email" class="input" type="email" autocomplete="username" required />
@@ -77,14 +118,14 @@ async function submit(e = email.value, p = password.value) {
             <label class="label" for="password">Password</label>
             <input id="password" v-model="password" class="input" type="password" autocomplete="current-password" required />
           </div>
-          <p v-if="error" class="text-sm text-rose-600">{{ error }}</p>
-          <button class="btn-primary w-full" :disabled="busy">Sign in</button>
+          <p v-if="error" class="text-sm text-red-800">{{ error }}</p>
+          <button class="btn-primary w-full" :disabled="busy">{{ busy ? 'Signing in…' : 'Sign in' }}</button>
         </form>
-      </div>
 
-      <p class="mt-4 text-center text-xs text-slate-500">
-        Tip: open a second window (or an incognito window) and sign in as another user. Each tab keeps its own session.
-      </p>
-    </div>
+        <p class="mt-6 text-xs leading-relaxed text-slate-600">
+          To try a call, open a second window (or an incognito window) and sign in as another user. Each tab keeps its own session.
+        </p>
+      </div>
+    </section>
   </div>
 </template>

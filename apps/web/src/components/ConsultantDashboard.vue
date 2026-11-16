@@ -2,18 +2,22 @@
 import { computed, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import type { HelpRequestDto } from '@help/shared';
-import { useRequests } from '@/composables/useRequests';
+import { useCallEvents, useRequests } from '@/composables/useRequests';
 import { api } from '@/lib/api';
-import { initials, timeAgo } from '@/lib/format';
-import StatusBadge from './StatusBadge.vue';
+import { timeAgo } from '@/lib/format';
+import { ticketRef } from '@/lib/track';
+import TicketTrack from './TicketTrack.vue';
 
 const router = useRouter();
-const { requests, loading, error, freshIds, upsert } = useRequests();
+const { requests, loading, error, freshIds, upsert, reload } = useRequests();
 const busyId = ref<string | null>(null);
 const actionError = ref('');
 const now = ref(Date.now());
 const tick = window.setInterval(() => (now.value = Date.now()), 30_000);
 onUnmounted(() => window.clearInterval(tick));
+
+// Recording and summary progress arrive as call events; refetch so each request's track moves on.
+useCallEvents(() => void reload());
 
 const open = computed(() => requests.value.filter((r) => r.status !== 'RESOLVED'));
 const resolved = computed(() => requests.value.filter((r) => r.status === 'RESOLVED'));
@@ -60,45 +64,55 @@ function seen(id: string) {
 
 <template>
   <div class="mx-auto max-w-6xl px-4 py-8">
-    <div class="mb-6 flex items-end justify-between">
+    <div class="mb-5 flex items-end justify-between gap-4">
       <div>
-        <h1 class="text-xl font-semibold tracking-tight">Help requests</h1>
-        <p class="mt-1 text-sm text-slate-500">New requests from your clients appear here instantly.</p>
+        <h1 class="flex items-center gap-2.5 text-xl font-semibold tracking-tight">
+          Help requests
+          <span v-if="!loading" class="rounded-full bg-slate-200/70 px-2 py-0.5 text-xs font-semibold text-slate-700 tabular-nums">{{ open.length }} open</span>
+        </h1>
+        <p class="mt-1 text-sm text-slate-600">New requests from your clients appear here instantly.</p>
       </div>
-      <span class="inline-flex items-center gap-2 text-xs text-slate-500">
-        <span class="h-2 w-2 rounded-full bg-emerald-500" /> Live
+      <span class="inline-flex shrink-0 items-center gap-2 text-xs font-medium text-slate-600">
+        <span class="relative flex h-2 w-2">
+          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-400 opacity-60" />
+          <span class="relative inline-flex h-2 w-2 rounded-full bg-brand-500" />
+        </span>
+        Live
       </span>
     </div>
 
-    <p v-if="error || actionError" class="mb-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{{ error || actionError }}</p>
+    <p v-if="error || actionError" class="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">{{ error || actionError }}</p>
 
     <div class="card overflow-hidden">
-      <div v-if="loading" class="p-8 text-center text-sm text-slate-500">Loading…</div>
-      <div v-else-if="!open.length" class="p-10 text-center">
-        <p class="font-medium text-slate-700">No open requests</p>
-        <p class="mt-1 text-sm text-slate-500">When a client raises a request it shows up here, no refresh needed.</p>
+      <div v-if="loading" class="space-y-3 p-5" aria-label="Loading requests">
+        <div v-for="n in 3" :key="n" class="h-14 animate-pulse rounded-md bg-slate-100" />
       </div>
-      <ul v-else class="divide-y divide-slate-100" data-testid="open-requests">
+      <div v-else-if="!open.length" class="px-6 py-12 text-center">
+        <p class="font-medium text-slate-800">No open requests</p>
+        <p class="mx-auto mt-1 max-w-sm text-sm text-slate-600">When a client raises a request it lands here straight away, with no refresh needed.</p>
+      </div>
+      <ul v-else class="divide-y divide-slate-200/70" data-testid="open-requests">
         <li
           v-for="r in open"
           :key="r.id"
-          class="flex items-start gap-4 px-5 py-4"
+          class="grid grid-cols-[auto_1fr] items-start gap-x-4 gap-y-3 px-5 py-4 sm:grid-cols-[auto_1fr_auto]"
           :class="{ 'flash-in': freshIds.has(r.id) }"
           @mouseenter="seen(r.id)"
         >
-          <span class="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">
-            {{ initials(r.client.name) }}
-          </span>
-          <div class="min-w-0 flex-1">
+          <span class="ticket-ref mt-0.5">{{ ticketRef(r.id) }}</span>
+          <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2">
-              <span class="font-medium">{{ r.title }}</span>
-              <StatusBadge :status="r.status" />
-              <span v-if="freshIds.has(r.id)" class="rounded bg-indigo-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white">New</span>
+              <span class="font-semibold text-slate-900">{{ r.title }}</span>
+              <span v-if="freshIds.has(r.id)" class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">New</span>
             </div>
-            <p v-if="r.description" class="mt-1 line-clamp-2 text-sm text-slate-600">{{ r.description }}</p>
-            <p class="mt-1 text-xs text-slate-500">{{ r.client.name }} · {{ timeAgo(r.createdAt, now) }}</p>
+            <p v-if="r.description" class="mt-1 line-clamp-2 max-w-prose text-sm text-slate-600">{{ r.description }}</p>
+            <p class="mt-1 flex gap-3 text-xs">
+              <span class="font-medium text-slate-700">{{ r.client.name }}</span>
+              <span class="text-slate-500">{{ timeAgo(r.createdAt, now) }}</span>
+            </p>
+            <TicketTrack :request="r" class="mt-3.5" />
           </div>
-          <div class="flex shrink-0 gap-2">
+          <div class="col-start-2 flex flex-wrap gap-2 sm:col-start-auto sm:justify-end">
             <RouterLink
               v-if="r.lastCallId && !r.activeCallId"
               :to="{ name: 'call-detail', params: { id: r.lastCallId } }"
@@ -116,22 +130,34 @@ function seen(id: string) {
       </ul>
     </div>
 
-    <details v-if="resolved.length" class="mt-6">
-      <summary class="cursor-pointer text-sm font-medium text-slate-600">Resolved ({{ resolved.length }})</summary>
-      <ul class="card mt-3 divide-y divide-slate-100">
-        <li v-for="r in resolved" :key="r.id" class="flex items-center justify-between px-5 py-3 text-sm">
-          <span>{{ r.title }} <span class="text-slate-500">· {{ r.client.name }}</span></span>
-          <span class="flex items-center gap-3">
-            <span class="text-xs text-slate-500">{{ timeAgo(r.updatedAt, now) }}</span>
-            <RouterLink
-              v-if="r.lastCallId"
-              :to="{ name: 'call-detail', params: { id: r.lastCallId } }"
-              class="font-medium text-indigo-600 hover:underline"
-              :data-testid="`view-call-${r.id}`"
-            >
-              View call
-            </RouterLink>
+    <details v-if="resolved.length" class="group mt-8">
+      <summary class="flex w-fit items-center gap-2 text-sm font-semibold text-slate-700 [&::-webkit-details-marker]:hidden">
+        <svg viewBox="0 0 16 16" class="h-3.5 w-3.5 text-slate-500 transition-transform duration-200 group-open:rotate-90" aria-hidden="true">
+          <path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Resolved
+        <span class="font-medium text-slate-500 tabular-nums">{{ resolved.length }}</span>
+      </summary>
+      <ul class="card mt-3 divide-y divide-slate-200/70">
+        <li v-for="r in resolved" :key="r.id" class="grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-2 px-5 py-3 text-sm lg:grid-cols-[auto_1fr_24rem_auto]">
+          <span class="ticket-ref">{{ ticketRef(r.id) }}</span>
+          <span class="min-w-0">
+            <span class="block truncate font-medium text-slate-800">{{ r.title }}</span>
+            <span class="flex gap-3 text-xs">
+              <span class="text-slate-600">{{ r.client.name }}</span>
+              <span class="text-slate-500">{{ timeAgo(r.updatedAt, now) }}</span>
+            </span>
           </span>
+          <TicketTrack :request="r" class="hidden lg:grid" />
+          <RouterLink
+            v-if="r.lastCallId"
+            :to="{ name: 'call-detail', params: { id: r.lastCallId } }"
+            class="btn-ghost -my-1 text-brand-700 hover:text-brand-800"
+            :data-testid="`view-call-${r.id}`"
+          >
+            View call
+          </RouterLink>
+          <span v-else class="text-xs text-slate-500">No call</span>
         </li>
       </ul>
     </details>

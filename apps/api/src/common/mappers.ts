@@ -10,7 +10,7 @@ export type RequestRow = HelpRequest & {
   client: Person;
   consultant: Person;
   /** All calls for the request, newest first. */
-  calls: Pick<Call, 'id' | 'status'>[];
+  calls: Pick<Call, 'id' | 'status' | 'processingStatus'>[];
 };
 
 export function toRequestDto(r: RequestRow): HelpRequestDto {
@@ -25,6 +25,7 @@ export function toRequestDto(r: RequestRow): HelpRequestDto {
     consultant: person(r.consultant),
     activeCallId: r.calls.find((c) => c.status !== 'ENDED')?.id ?? null,
     lastCallId: r.calls.find((c) => c.status === 'ENDED')?.id ?? null,
+    latestCall: r.calls[0] ? { status: r.calls[0].status, processingStatus: r.calls[0].processingStatus } : null,
   };
 }
 

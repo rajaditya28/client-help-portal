@@ -4,6 +4,7 @@ import App from './App.vue';
 import { setUnauthorizedHandler } from './lib/api';
 import { router } from './router';
 import { useAuth } from './stores/auth';
+import '@fontsource-variable/public-sans';
 import './style.css';
 
 const app = createApp(App);

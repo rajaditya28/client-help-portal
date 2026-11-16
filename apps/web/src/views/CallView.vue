@@ -251,7 +251,7 @@ const peerLabel = computed(
 
     <!-- Lobby: a click is required (mic permission + audio autoplay), which also makes refresh-rejoin explicit. -->
     <div v-else-if="phase === 'lobby' || phase === 'joining'" class="card mx-auto max-w-lg p-8 text-center">
-      <p class="text-sm font-medium text-indigo-600">{{ call?.requestTitle }}</p>
+      <p class="text-sm font-medium text-brand-700">{{ call?.requestTitle }}</p>
       <h1 class="mt-1 text-xl font-semibold">Call with {{ other }}</h1>
       <p class="mt-2 text-sm text-slate-500">
         {{
@@ -261,7 +261,7 @@ const peerLabel = computed(
         }}
       </p>
       <p v-if="call?.status === 'ACTIVE'" class="mt-3 text-xs text-slate-500">This call is in progress. Joining again reconnects you.</p>
-      <p v-if="errorMsg" class="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{{ errorMsg }}</p>
+      <p v-if="errorMsg" class="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">{{ errorMsg }}</p>
       <div class="mt-6 flex justify-center gap-3">
         <RouterLink to="/" class="btn-secondary">Back</RouterLink>
         <button class="btn-primary" :disabled="phase === 'joining'" data-testid="join" @click="join">
@@ -282,16 +282,16 @@ const peerLabel = computed(
           <span v-else class="h-2.5 w-2.5 rounded-full bg-slate-300" />
           <span :class="isRecordingLive ? 'text-rose-700' : 'text-slate-600'">{{ recordingLabel }}</span>
         </div>
-        <div class="ml-auto font-mono text-sm tabular-nums text-slate-600">{{ clock(elapsed) }}</div>
+        <div class="ml-auto text-sm font-medium tabular-nums text-slate-700">{{ clock(elapsed) }}</div>
       </div>
 
-      <p v-if="errorMsg" class="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{{ errorMsg }}</p>
+      <p v-if="errorMsg" class="rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">{{ errorMsg }}</p>
 
       <!-- Stage -->
-      <div class="relative aspect-video overflow-hidden rounded-xl bg-slate-900">
+      <div class="relative aspect-video overflow-hidden rounded-[10px] bg-slate-950">
         <template v-if="isConsultant">
           <video ref="remoteVideo" autoplay playsinline class="h-full w-full object-contain" data-testid="remote-video" />
-          <div v-if="!remoteHasVideo" class="absolute inset-0 grid place-items-center bg-slate-900 text-center text-slate-300" data-testid="no-screen">
+          <div v-if="!remoteHasVideo" class="absolute inset-0 grid place-items-center bg-slate-950 text-center text-slate-300" data-testid="no-screen">
             <div>
               <p class="text-lg font-medium">{{ peerState === 'connected' ? `${other} is not sharing their screen yet` : peerLabel }}</p>
               <p v-if="peerState === 'connected'" class="mt-1 text-sm text-slate-400">You can talk in the meantime.</p>
@@ -338,7 +338,7 @@ const peerLabel = computed(
       @decide="setConsent"
     />
 
-    <div v-if="phase === 'leaving'" class="fixed inset-0 z-50 grid place-items-center bg-white/80 backdrop-blur-sm">
+    <div v-if="phase === 'leaving'" class="fixed inset-0 z-50 grid place-items-center bg-slate-50/90">
       <div class="text-center">
         <p class="font-medium">Ending call…</p>
         <p v-if="recorder" class="mt-1 text-sm text-slate-500">Uploading the last part of the recording</p>
