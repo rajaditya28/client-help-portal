@@ -11,10 +11,11 @@ const reached = (s: StageState) => s === 'done' || s === 'current' || s === 'fai
 /** One-line caption for narrow widths, where five labels don't fit: the furthest stage reached. */
 const furthest = computed(() => [...stages.value].reverse().find((x) => x.state !== 'pending') ?? stages.value[0]);
 
-function dotClass(s: StageState) {
+function dotClass(s: StageState, key?: string) {
   switch (s) {
     case 'done':
-      return 'bg-brand-600 ring-brand-600';
+      // Close Green marks the finish line; every other completed step is blue.
+      return key === 'resolved' ? 'bg-close ring-close' : 'bg-brand-600 ring-brand-600';
     case 'current':
       return 'bg-white ring-2 ring-brand-600';
     case 'failed':
@@ -39,7 +40,7 @@ function labelClass(s: StageState) {
     <ol class="grid grid-cols-5" aria-label="Progress" data-testid="ticket-track">
     <li v-for="(s, i) in stages" :key="s.key" class="min-w-0" :data-state="s.state">
       <div class="flex h-3 items-center">
-        <span class="relative grid h-2.5 w-2.5 shrink-0 place-items-center rounded-full ring-1 transition-colors duration-300" :class="dotClass(s.state)">
+        <span class="relative grid h-2.5 w-2.5 shrink-0 place-items-center rounded-full ring-1 transition-colors duration-300" :class="dotClass(s.state, s.key)">
           <span v-if="s.state === 'current'" class="h-1 w-1 animate-pulse rounded-full bg-brand-600" />
         </span>
         <!-- Connector to the next stage: fills from the left once the next stage is reached. -->

@@ -103,7 +103,7 @@ function seen(id: string) {
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2">
               <span class="font-semibold text-slate-900">{{ r.title }}</span>
-              <span v-if="freshIds.has(r.id)" class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">New</span>
+              <span v-if="freshIds.has(r.id)" class="rounded-full bg-capture px-2 py-0.5 text-xs font-semibold text-brand-950">New</span>
             </div>
             <p v-if="r.description" class="mt-1 line-clamp-2 max-w-prose text-sm text-slate-600">{{ r.description }}</p>
             <p class="mt-1 flex gap-3 text-xs">

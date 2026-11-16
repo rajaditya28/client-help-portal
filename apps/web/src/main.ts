@@ -4,7 +4,11 @@ import App from './App.vue';
 import { setUnauthorizedHandler } from './lib/api';
 import { router } from './router';
 import { useAuth } from './stores/auth';
-import '@fontsource-variable/public-sans';
+// Poppins, HighLevel's brand typeface, in the four weights its brand kit allows.
+import '@fontsource/poppins/400.css';
+import '@fontsource/poppins/500.css';
+import '@fontsource/poppins/600.css';
+import '@fontsource/poppins/700.css';
 import './style.css';
 
 const app = createApp(App);

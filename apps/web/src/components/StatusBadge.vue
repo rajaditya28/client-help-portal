@@ -3,19 +3,19 @@ import { computed } from 'vue';
 
 const props = defineProps<{ status: string }>();
 
-// Amber: waiting on someone. Rose with a pulse: live. Brand: done. Neutral: nothing to do.
+// Yellow: waiting on someone. Rose with a pulse: live. Green: done. Neutral: nothing to do.
 const styles: Record<string, [string, string]> = {
-  OPEN: ['Open', 'bg-amber-50 text-amber-800 ring-amber-600/25'],
+  OPEN: ['Open', 'bg-capture-tint text-capture-ink ring-capture/60'],
   IN_CALL: ['In call', 'bg-rose-50 text-rose-700 ring-rose-600/20'],
-  RESOLVED: ['Resolved', 'bg-brand-50 text-brand-700 ring-brand-600/20'],
-  RINGING: ['Ringing', 'bg-amber-50 text-amber-800 ring-amber-600/25'],
+  RESOLVED: ['Resolved', 'bg-close-tint text-close-ink ring-close/40'],
+  RINGING: ['Ringing', 'bg-capture-tint text-capture-ink ring-capture/60'],
   ACTIVE: ['Live', 'bg-rose-50 text-rose-700 ring-rose-600/20'],
   ENDED: ['Ended', 'bg-slate-100 text-slate-600 ring-slate-500/20'],
   NOT_RECORDED: ['Not recorded', 'bg-slate-100 text-slate-600 ring-slate-500/20'],
   RECORDING: ['Recording', 'bg-rose-50 text-rose-700 ring-rose-600/20'],
-  QUEUED: ['Queued', 'bg-slate-100 text-slate-700 ring-slate-500/20'],
-  PROCESSING: ['Processing', 'bg-slate-100 text-slate-700 ring-slate-500/20'],
-  READY: ['Ready', 'bg-brand-50 text-brand-700 ring-brand-600/20'],
+  QUEUED: ['Queued', 'bg-brand-50 text-brand-700 ring-brand-600/20'],
+  PROCESSING: ['Processing', 'bg-brand-50 text-brand-700 ring-brand-600/20'],
+  READY: ['Ready', 'bg-close-tint text-close-ink ring-close/40'],
   FAILED: ['Failed', 'bg-red-50 text-red-800 ring-red-700/25'],
 };
 

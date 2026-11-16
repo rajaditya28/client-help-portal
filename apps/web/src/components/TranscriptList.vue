@@ -26,7 +26,7 @@ watch(activeIndex, (i) => {
 
 function color(s: TranscriptSegmentDto) {
   if (s.role === 'CONSULTANT') return 'text-brand-700';
-  if (s.role === 'CLIENT') return 'text-violet-700';
+  if (s.role === 'CLIENT') return 'text-slate-900';
   return 'text-slate-600';
 }
 </script>

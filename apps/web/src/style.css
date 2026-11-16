@@ -1,36 +1,46 @@
 @import 'tailwindcss';
 
 /*
- * Service-desk palette: a deep teal shell around a cool white work area.
- * Amber is reserved for "needs you" (new or waiting requests), rose for "live / recording".
+ * HighLevel's brand palette (from its brand kit): Space Blue shell, Nurture/Background Blue for
+ * interface accents, Capture Yellow for call-to-action buttons, Close Green for finished work.
+ * Rose stays reserved for "live / recording".
  */
 @theme {
-  --font-sans: 'Public Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  --color-brand-50: #edf6f5;
-  --color-brand-100: #d3ebe8;
-  --color-brand-200: #a9d6d1;
-  --color-brand-300: #74bab3;
-  --color-brand-400: #3e9a93;
-  --color-brand-500: #1f7f78;
-  --color-brand-600: #156862;
-  --color-brand-700: #125651;
-  --color-brand-800: #104744;
-  --color-brand-900: #0e3b39;
-  --color-brand-950: #082725;
+  /* Blue scale built on Nurture Blue #2896FB and Background Blue #095DC3, ending in Space Blue #07223D. */
+  --color-brand-50: #e7f3fe;
+  --color-brand-100: #cfe6fe;
+  --color-brand-200: #a3d1fd;
+  --color-brand-300: #6fb8fc;
+  --color-brand-400: #45a5fb;
+  --color-brand-500: #2896fb;
+  --color-brand-600: #1478dc;
+  --color-brand-700: #095dc3;
+  --color-brand-800: #0b4a96;
+  --color-brand-900: #0c3a70;
+  --color-brand-950: #07223d;
 
-  /* Neutrals tinted toward the teal shell instead of stock blue-grey. */
-  --color-slate-50: #f4f7f7;
-  --color-slate-100: #e8eeee;
-  --color-slate-200: #d5dfe0;
-  --color-slate-300: #b4c3c5;
-  --color-slate-400: #869a9d;
-  --color-slate-500: #5d7376;
-  --color-slate-600: #465b5e;
-  --color-slate-700: #34484b;
-  --color-slate-800: #223437;
-  --color-slate-900: #142427;
-  --color-slate-950: #0a1719;
+  /* Neutrals tinted toward Space Blue. */
+  --color-slate-50: #f5f8fc;
+  --color-slate-100: #edf2f8;
+  --color-slate-200: #dde5ef;
+  --color-slate-300: #c3d0df;
+  --color-slate-400: #8fa1b8;
+  --color-slate-500: #5f7390;
+  --color-slate-600: #475a75;
+  --color-slate-700: #34465f;
+  --color-slate-800: #1f3049;
+  --color-slate-900: #0f2138;
+  --color-slate-950: #07172a;
+
+  --color-capture: #ffd000;
+  --color-capture-hover: #ffdb3d;
+  --color-capture-tint: #fef9e1;
+  --color-capture-ink: #6b5300;
+  --color-close: #17d94b;
+  --color-close-tint: #e4fbea;
+  --color-close-ink: #0b6e27;
 
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -43,7 +53,6 @@ body,
 
 body {
   @apply bg-slate-50 text-slate-900 antialiased;
-  font-feature-settings: 'ss01' on;
   caret-color: var(--color-brand-600);
   accent-color: var(--color-brand-600);
   scrollbar-color: var(--color-slate-300) transparent;
@@ -80,7 +89,7 @@ body {
     active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
 }
 @utility btn-primary {
-  @apply btn bg-brand-700 text-white hover:bg-brand-600;
+  @apply btn bg-capture text-brand-950 hover:bg-capture-hover;
 }
 @utility btn-secondary {
   @apply btn border border-slate-300 bg-white text-slate-800 hover:border-slate-400 hover:bg-slate-50;
@@ -107,10 +116,10 @@ body {
   @apply inline-flex items-center rounded bg-slate-100 px-1.5 py-px text-xs font-semibold tracking-wide text-slate-600 tabular-nums;
 }
 
-/* A request that just arrived: one tint that fades, so the eye finds it without a banner. */
+/* A request that just arrived: one yellow tint that fades, so the eye finds it without a banner. */
 @keyframes flash-in {
   from {
-    background-color: rgb(254 243 199);
+    background-color: var(--color-capture-tint);
   }
   to {
     background-color: transparent;

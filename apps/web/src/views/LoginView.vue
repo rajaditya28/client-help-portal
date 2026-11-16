@@ -66,7 +66,8 @@ async function submit(e = email.value, p = password.value) {
           Raise a request, share your screen on a call, and both of you get the recording, a transcript and a summary afterwards.
         </p>
       </div>
-      <figure class="hidden max-w-md lg:block">
+      <div class="max-w-md space-y-8">
+      <figure class="hidden lg:block">
         <div class="rounded-[10px] bg-white p-5 text-slate-900 shadow-[0_20px_40px_-20px_rgb(0_0_0/0.6)]">
           <div class="flex items-start gap-3">
             <span class="ticket-ref mt-0.5">#A3F2</span>
@@ -82,6 +83,8 @@ async function submit(e = email.value, p = password.value) {
         </div>
         <figcaption class="mt-3 text-sm text-brand-100/70">An example request, tracked from raised to resolved.</figcaption>
       </figure>
+      <p class="text-xs text-brand-100/60">Built for HighLevel by Aditya Raj</p>
+      </div>
     </aside>
 
     <section class="flex flex-1 items-center justify-center px-4 py-10 sm:px-8">
